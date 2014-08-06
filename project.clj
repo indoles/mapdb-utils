@@ -1,6 +1,8 @@
-(defproject com.indoles.clj/mapdb-utils "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+(defproject com.indoles.clj/mapdb-utils "0.1.0"
+  :description "Easy transactions for mapdp with clojure"
+  :url "http://github.com/indoles/mapdb-utils"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.6.0"]])
+  :repl-options {:init-ns com.indoles.clj.mapdb-utils}
+  :dependencies [[org.clojure/clojure "1.6.0"]
+                 [org.mapdb/mapdb "1.0.5"]])
