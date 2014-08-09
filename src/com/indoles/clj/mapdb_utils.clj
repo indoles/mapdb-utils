@@ -8,40 +8,45 @@
   ([]
      (-> (DBMaker/newMemoryDB) (.closeOnJvmShutdown) (.makeTxMaker))))
 
-(defmacro try-with->
-  [type my-sym txm name & forms]
-  `(let [tx# (.makeTx ~txm)
-         tm# (~type tx# ~name)
-         result# (try
-                   (let [~my-sym tm#]
-                     ~@forms)
-                   (catch Exception e#
-                     (.rollback tx#)
-                     {:exception e#}))]
-     (.commit tx#)
-     result#))
+(defmacro N
+  [s]
+  `(cond
+    (.endsWith ~s "-q") '.getQueue
+    (.endsWith ~s "-s") '.getTreeSet
+    (.endsWith ~s "-k") '.getStack
+    :else '.getTreeMap))
+
+(defmacro try-over
+  [& what]
+  (let [syms (set (take-while #(not= 'using %) what))
+        using (drop-while #(not= 'using %) what)
+        txm (fnext using)
+        forms (-> using next next)
+        tx (gensym "tx")
+        l-bindings (loop [r [] b syms]
+                     (if (empty? b)
+                       r
+                       (let [s (first b)
+                             n (-> s name)
+                             item-name (.substring n 0 (- (.length n) 2))]
+                         (recur (conj r s (list (N n) tx item-name))  (next b)))))]
+    `(let [~tx (.makeTx ~txm)
+           result# (try
+                     (let ~l-bindings ~@forms)
+                     (catch Exception e#
+                       (.rollback ~tx)
+                       {:exception e#}))]
+       (.commit ~tx)
+       result#)))
+
+(comment
+  "over my-q my-m using txm transact form1 form2 from3   --->
+(let [my-q (.getQueue txm 'my')
+      my-m (.getTreeMap txm 'my']
+   form1
+   form2
+   form3")
 
 (defn exception-result?
   [result]
   (and (map? result) (:exception result)))
-
-(defmacro try-with-map->
-  [my-sym txm name & forms]
-  `(try-with-> .getTreeMap ~my-sym ~txm ~name ~@forms))
-
-(defmacro try-with-q->
-  [my-sym txm name & forms]
-  `(try-with-> .getQueue ~my-sym ~txm ~name ~@forms))
-
-(defmacro try-with-stack->
-  [my-sym txm name & forms]
-  `(try-with-> .getStack ~my-sym ~txm ~name ~@forms))
-
-(defmacro try-with-set->
-  [my-sym txm name & forms]
-  `(try-with-> .getTreeSet ~my-sym ~txm ~name ~@forms))
-
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (println x "Hello, World!"))

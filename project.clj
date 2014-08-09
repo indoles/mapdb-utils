@@ -1,4 +1,4 @@
-(defproject com.indoles.clj/mapdb-utils "0.1.0"
+(defproject com.indoles.clj/mapdb-utils "0.1.1"
   :description "Easy transactions for mapdp with clojure"
   :url "http://github.com/indoles/mapdb-utils"
   :license {:name "Eclipse Public License"
